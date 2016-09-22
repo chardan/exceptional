@@ -1,0 +1,107 @@
+/* 
+Benchmark a "normal" function and/or try-catch block, without our library. 
+*/
+
+#include "exceptional.hpp"
+
+#include "bench_lib.hpp"
+
+#include <set>
+#include <map>
+#include <string>
+#include <chrono>
+#include <iostream>
+
+using namespace std;
+
+using timings_type = map<string, map<int, chrono::steady_clock::duration>>;
+
+int std_except_handler(std::exception& e)
+{
+ std::cerr << "exception caught: " << e.what() << '\n';
+ return 0;
+}
+
+/* Touch a volatile variable declared in another compilation unit. The /hope/ is
+that the compiler won't actually see it... */
+int f_breakage(const int i) noexcept
+{
+ return attempt_bench_data_to_touch ^= static_cast<bool>(i);
+}
+
+auto test_plain_call(const int i) noexcept
+{
+ return f_breakage(i);
+}
+
+/* Exception handler is present, but f() will never actually throw:
+	- presumably, the compiler can optimize this...: */
+auto test_attempt_call_with_exception_handler(const int i)
+{
+ static auto fn_ = exceptional::attempt(f_breakage, std_except_handler);
+ return fn_(i);
+}
+
+// throws when value is 0:
+int g(const int i)
+{
+ if(0 == i)
+  throw std::exception();
+
+ return f_breakage(i);
+}
+
+auto test_attempt_call_throw(const int i)
+{
+ static auto fn = exceptional::attempt(g, std_except_handler);
+ return fn(i);
+}
+
+template <typename FnT>
+auto test(FnT& f, const unsigned int ncalls)
+{
+ using namespace std;
+
+ auto start = chrono::steady_clock::now();
+
+ // The idea here is that touching the external, volatile variable can't be optimized away:
+ for(std::remove_const<decltype(ncalls)>::type i = 0; ncalls > i; ++i)
+  f(i);
+
+ return chrono::steady_clock::now() - start;
+}
+
+template <typename FnT>
+auto time_test(const int& round, FnT& f, const unsigned int ncalls = 10'000'000)
+{
+ return make_pair(round, test(f, ncalls));
+}
+
+int main()
+{
+ timings_type timings;
+
+ for(int round = 1; 5 >= round; ++round)
+  {
+	std::cout << "* round " << round << ":\n";
+
+	timings["test_plain_call"].insert(time_test(round, test_plain_call));
+	timings["test_attempt_call_with_exception_handler"].insert(time_test(round, test_attempt_call_with_exception_handler));
+	timings["test_attempt_call_throw"].insert(time_test(round, test_attempt_call_throw));
+  }
+
+ for(const auto& timing : timings)
+  {
+	cout << "==== " << timing.first << ":\n";
+
+	const auto& test = timing.second;
+
+	for(const auto& round : test)
+	 {
+		cout << " " << round.first << ":\n";
+		cout << chrono::duration <double, milli> (round.second).count() << " ms" << endl; 
+	 }
+  }
+
+ return 0;
+}
