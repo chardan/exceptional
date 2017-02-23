@@ -1,0 +1,80 @@
+## TODO, Suggested Projects:
+
+* TODO: Better examples! The examples aren't great, and that's a bit of a shame. Ideas welcome! One place to start might be noticing that
+it's easy to call a function in a checked loop:
+	while(!password()) { ... }
+...so on, so forth.
+
+* Examples, part II:
+	Worthwhile would be to include a survey of error-handling techniques and how they fit in with the library; one way to view attempt() is
+as a filter operation. Translating some caught exceptions into returned result payloads and allowing others to propagate seems like a worthwhile
+are to explore-- seeing how this can "fit in" with existing exception strategies.
+
+* exceptional::rethrow_filter(f, h, h0, h1, ...)
+    void h0();
+    void h1();
+
+    try
+    {
+        return f();
+    }
+    catch(h0& e)
+    {
+        throw e;
+    }
+    catch(h1& e)
+    {
+        throw e;
+    }
+    catch(...)
+    {
+        h();
+    }
+
+    ...or something like that.
+
+* More examples would be nice. 
+
+* Replace boost::function_traits with the standard library type_traits, or something without an external dependency.
+
+* Possible bug: checking conversion on return types is decide whether or not to ignore them seemed cute, but now I think I
+had it right the first time: just check for void. That way, the compiler can report as an error any rejection of
+return type-- right now, results are ignored when that code is activated, and I think the only appropriate type for
+that is void. (detail.hpp, Maybe<... enable_if_t... is_constructible>>). Opinions?
+
+* Policy classes should control behavior of catching. For example, there's no reason to be married to std::optional<>.
+	- Ideally, the existing Maybe monad could return whatever the user wanted.
+
+* It would be nice to multiple exception types in one handler. For example, a signature:
+	void handler(std::exception&, user_exception&);
+...should be invoked to catch either a thrown std::exception& or user_exception&.
+
+* Improvements to the build system are welcomed; I'm not that cmake saavy.
+	- the library itself should remain header-only, if possible.
+
+* RapidCheck ALL THE THINGS! :-)
+	- RapidCheck is a QuickCheck style tester for C++.
+
+* Any Callable type should be acceptable (although by-reference sounds pretty dangerous!)-- including functions
+  that are moved into the closure.
+
+* It may be that the general case of finding a function signature automatically isn't direclty possible (eg. overloaded
+  functions). Find out if this is the case.
+
+* Limitation: It would be nice to be able to take lambda functions. Unfortunately, the mechanisms I'm using can't deduce lambda type signatures (perhaps because they aren't named objects, and can't have their address taken).
+	- perhaps a lambda-wrapper workaround is possible?
+
+* Improved benchmarks, more scenarios, etc..
+	The initial benchmark is pretty quick and dirty. My early measurements are encouraging, showing surprisingly comprable times for
+	attempt-enabled functions and raw functions when optimization is on. I wasn't able to include GCC at this time.
+
+	Some improvements suggested so far include (and are at least partially implemented):
+		- split the test functions into different modules, to avoid effects from
+		compiler optimization, especially inlining (Lippincott).
+		- --force-no-inline (Keane).
+		- write to a volatile variable in a separate compilation unit; the compiler probably can't see it (Helpern).
+		- separate measurment of the overhead of optional, lambda, and n-depth nesting
+
+	...that said, I'm of course most interested in how the compiler /can/ optimize it! Nonetheless, I'd like to get a handle on the overhead of using this method, itself. Improvements welcomed.
+
+

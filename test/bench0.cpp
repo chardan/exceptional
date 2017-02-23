@@ -1,3 +1,9 @@
+
+//          Copyright Jesse Williamson 2017.
+// Distributed under the Boost Software License, Version 1.0.
+//    (See accompanying file LICENSE_1_0.txt or copy at
+//          http://www.boost.org/LICENSE_1_0.txt)
+
 /* Please note that many things need to change about this benchmark for it to be
 meaningful. */
 
