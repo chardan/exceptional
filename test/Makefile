@@ -6,7 +6,7 @@
 
 
 CXX_CLANG=clang --std=c++1y -lstdc++ 
-CXX_GCC=g++-6 --std=c++14 
+CXX_GCC=g++ --std=c++14 
 
 CXX=$(CXX_CLANG) 
 #CXX=$(CXX_GCC)
