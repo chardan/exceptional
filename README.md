@@ -9,7 +9,7 @@ Amaze your friends, confound your enemies!
 ```
 // Given:
 string read_first_line(const string&);
-string handle_read_error(std::exception&);
+string handle_read_error(exception&);
 
 // Construct a new function:
 auto checked = exceptional::attempt(read_first_line, handle_read_error);
